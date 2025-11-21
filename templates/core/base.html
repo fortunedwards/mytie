@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>{% block title %}Tie Business - Dashboard{% endblock %}</title>
+    <link rel="icon" type="image/jpeg" href="/static/images/icon.jpg" style="border-radius: 50%;">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1A73E8",
+                        "background-light": "#F8F9FA",
+                        "background-dark": "#111821",
+                        "sage-green": "#81C995",
+                        "salmon": "#F28B82"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-[#111418] dark:text-white">
+<div class="flex h-screen w-full">
+    <!-- Collapsible Sidebar Navigation -->
+    <aside id="sidebar" class="flex flex-col h-full bg-black border-r border-gray-800 transition-all duration-300 w-64 p-4 shrink-0">
+        <div class="flex items-center justify-between mb-8 mt-4">
+            <div class="flex-1 flex justify-center" id="logoContainer">
+                <img src="/static/images/My tie.png" alt="My Tie" class="h-12 w-auto" id="logo">
+            </div>
+            <button onclick="toggleSidebar()" class="text-white hover:bg-gray-800 p-2 rounded-lg" id="toggleBtn">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+        </div>
+        <nav class="flex flex-col gap-2 flex-1">
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg {% if request.resolver_match.url_name == 'dashboard' %}bg-primary/20 text-primary{% else %}hover:bg-gray-800 text-white{% endif %}" href="{% url 'dashboard' %}">
+                <span class="material-symbols-outlined">dashboard</span>
+                <p class="text-sm font-semibold nav-text">Dashboard</p>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg {% if request.resolver_match.url_name == 'orders' %}bg-primary/20 text-primary{% else %}hover:bg-gray-800 text-white{% endif %}" href="{% url 'orders' %}">
+                <span class="material-symbols-outlined">shopping_cart</span>
+                <p class="text-sm font-medium nav-text">Orders</p>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg {% if request.resolver_match.url_name == 'customers' %}bg-primary/20 text-primary{% else %}hover:bg-gray-800 text-white{% endif %}" href="{% url 'customers' %}">
+                <span class="material-symbols-outlined">group</span>
+                <p class="text-sm font-medium nav-text">Customers</p>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg {% if request.resolver_match.url_name == 'financial_report' %}bg-primary/20 text-primary{% else %}hover:bg-gray-800 text-white{% endif %}" href="{% url 'financial_report' %}">
+                <span class="material-symbols-outlined">bar_chart</span>
+                <p class="text-sm font-medium nav-text">Reports</p>
+            </a>
+
+        </nav>
+        
+        <div class="mt-auto">
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-white" href="{% url 'logout' %}">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                </svg>
+                <p class="text-sm font-medium nav-text">Logout</p>
+            </a>
+        </div>
+
+    </aside>
+    <!-- Main Content -->
+    <div class="flex flex-col flex-1 w-full overflow-y-auto">
+        <!-- Top Bar -->
+        <header class="sticky top-0 z-10 flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-gray-800 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm px-6 h-20">
+            <div class="flex-1">
+                <label class="flex flex-col min-w-40 !h-12 max-w-lg">
+                    <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                        <div class="text-gray-500 flex border-none bg-white dark:bg-gray-900 items-center justify-center pl-4 rounded-l-lg border-r-0">
+                            <span class="material-symbols-outlined">search</span>
+                        </div>
+                        <input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-[#111418] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border-none bg-white dark:bg-gray-900 focus:border-none h-full placeholder:text-gray-500 px-4 pl-2 text-base font-normal leading-normal" placeholder="Search anything..." value=""/>
+                    </div>
+                </label>
+            </div>
+
+        </header>
+        <!-- Main Content Area -->
+        <main class="flex-1 p-6 lg:p-8">
+            <div class="flex flex-col gap-6">
+                <!-- Messages -->
+                {% if messages %}
+                    <div class="flex flex-col gap-2">
+                        {% for message in messages %}
+                            <div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-sage-green/10 border border-sage-green/20">
+                                <span class="material-symbols-outlined text-sage-green">check_circle</span>
+                                <p class="text-sm text-sage-green font-medium">{{ message }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- Page Content -->
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+</div>
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const logoContainer = document.getElementById('logoContainer');
+    const navTexts = document.querySelectorAll('.nav-text');
+    const toggleBtn = document.getElementById('toggleBtn');
+    
+    if (sidebar.classList.contains('w-64')) {
+        // Collapse
+        sidebar.classList.remove('w-64');
+        sidebar.classList.add('w-16');
+        logoContainer.style.display = 'none';
+        navTexts.forEach(text => text.style.display = 'none');
+        toggleBtn.innerHTML = '<span class="material-symbols-outlined">menu_open</span>';
+    } else {
+        // Expand
+        sidebar.classList.remove('w-16');
+        sidebar.classList.add('w-64');
+        logoContainer.style.display = 'flex';
+        navTexts.forEach(text => text.style.display = 'block');
+        toggleBtn.innerHTML = '<span class="material-symbols-outlined">menu</span>';
+    }
+}
+
+
+</script>
+</body>
+</html>

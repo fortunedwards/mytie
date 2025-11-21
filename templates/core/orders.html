@@ -1,0 +1,409 @@
+{% extends 'core/base.html' %}
+{% load currency_filters %}
+
+{% block title %}Orders{% endblock %}
+
+{% block content %}
+<style>
+    .font-monospace {
+        font-family: 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+    }
+</style>
+
+<!-- Page Header -->
+<div class="flex flex-wrap justify-between items-center gap-4">
+    <div class="flex flex-col gap-1">
+        <h1 class="text-[#111418] dark:text-white text-3xl font-bold leading-tight">Orders</h1>
+        <p class="text-gray-500 text-base font-normal leading-normal">Manage and track all customer orders.</p>
+    </div>
+    <button onclick="toggleModal()" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] shadow-sm hover:bg-primary/90">
+        <span class="truncate">+ New Order</span>
+    </button>
+</div>
+
+<!-- Orders Table -->
+<div class="flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+    <!-- Table Header -->
+    <div class="grid grid-cols-10 gap-4 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Date</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Order #</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Name</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Ties</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Cost Price</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Selling Price</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Delivery Fee</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Who Paid</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Profit</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Actions</div>
+    </div>
+    
+    <!-- Table Rows -->
+    <div class="divide-y divide-gray-200 dark:divide-gray-800">
+        {% for order in orders %}
+            <div class="grid grid-cols-10 items-center gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors duration-150">
+                <div class="text-gray-600 dark:text-gray-300 text-sm">{{ order.created_at|date:"M d, Y" }}</div>
+                <div class="text-[#111418] dark:text-white text-sm font-bold">{{ order.order_number }}</div>
+                <div class="text-gray-600 dark:text-gray-300 text-sm">{{ order.customer.first_name }} {{ order.customer.last_name }}</div>
+                <div class="text-gray-600 dark:text-gray-300 text-sm">{{ order.number_of_ties }}</div>
+                <div class="text-gray-600 dark:text-gray-300 text-sm">₦{{ order.total_cost|currency_decimal }}</div>
+                <div class="text-gray-600 dark:text-gray-300 text-sm">₦{{ order.total_amount|currency_decimal }}</div>
+                <div class="text-gray-600 dark:text-gray-300 text-sm">₦{{ order.delivery_fee|currency }}</div>
+                <div class="text-gray-600 dark:text-gray-300 text-sm">{{ order.get_delivery_payment_type_display }}</div>
+                <div class="text-sage-green text-sm font-medium">₦{{ order.calculate_profit|currency_decimal }}</div>
+                <div class="flex gap-2">
+                    <button onclick="editOrder({{ order.id }})" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                    </button>
+                    <button onclick="deleteOrder({{ order.id }}, '{{ order.order_number }}')" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                        <span class="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                </div>
+            </div>
+        {% empty %}
+            <div class="px-6 py-8 text-center col-span-10">
+                <p class="text-gray-500 text-sm">No orders found.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="flex items-center justify-center p-4">
+    <nav aria-label="Pagination" class="flex items-center gap-2">
+        {% if page_obj.has_previous %}
+            <a class="flex size-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" href="?page={{ page_obj.previous_page_number }}">
+                <span class="material-symbols-outlined text-xl">chevron_left</span>
+            </a>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="text-sm font-bold leading-normal flex size-9 items-center justify-center text-white bg-primary rounded-lg">{{ num }}</span>
+            {% else %}
+                <a class="text-sm font-medium leading-normal flex size-9 items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg" href="?page={{ num }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+            <a class="flex size-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" href="?page={{ page_obj.next_page_number }}">
+                <span class="material-symbols-outlined text-xl">chevron_right</span>
+            </a>
+        {% endif %}
+    </nav>
+</div>
+{% endif %}
+
+<!-- New Order Modal -->
+<div id="orderModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-[#111418] dark:text-white">Create New Order</h2>
+            <button onclick="toggleModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            <!-- Customer Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
+                    <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone</label>
+                    <input type="tel" name="phone" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Address</label>
+                <textarea name="address" required rows="2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white"></textarea>
+            </div>
+            
+            <!-- Order Details -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Order Date</label>
+                    <input type="date" name="order_date" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Number of Ties</label>
+                    <input type="number" name="number_of_ties" min="1" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cost Price per Tie (₦)</label>
+                    <input type="number" name="cost_price_per_tie" step="0.01" min="0" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selling Price (₦)</label>
+                    <input type="number" name="total_cost_of_ties" step="0.01" min="0" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+            </div>
+            
+            <!-- Delivery Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Who Pays Delivery</label>
+                    <select name="delivery_payment_type" id="deliveryPaymentType" onchange="toggleDeliveryAmounts()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                        <option value="customer">Customer Paid</option>
+                        <option value="business">Business Paid</option>
+                        <option value="shared">Shared Payment</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Packaging Boxes</label>
+                    <input type="number" name="packaging_boxes" min="0" value="0" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="deliveryAmounts" style="display: none;">
+                <div id="customerAmountField" style="display: none;">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Customer Delivery Amount (₦)</label>
+                    <input type="number" name="customer_delivery_amount" step="0.01" min="0" value="0" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+                <div id="businessAmountField" style="display: none;">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Business Delivery Amount (₦)</label>
+                    <input type="number" name="business_delivery_amount" step="0.01" min="0" value="0" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" onclick="toggleModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                    Cancel
+                </button>
+                <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 font-medium">
+                    Create Order
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Order Modal -->
+<div id="editOrderModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-[#111418] dark:text-white">Edit Order</h2>
+            <button onclick="toggleEditModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <form method="post" action="/orders/update/" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" id="editOrderId" name="order_id">
+            
+            <!-- Customer Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
+                    <input type="text" id="editName" name="name" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone</label>
+                    <input type="tel" id="editPhone" name="phone" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Address</label>
+                <textarea id="editAddress" name="address" required rows="2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white"></textarea>
+            </div>
+            
+            <!-- Order Details -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Order Date</label>
+                    <input type="date" id="editOrderDate" name="order_date" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Number of Ties</label>
+                    <input type="number" id="editNumberOfTies" name="number_of_ties" min="1" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cost Price per Tie (₦)</label>
+                    <input type="number" id="editCostPricePerTie" name="cost_price_per_tie" step="0.01" min="0" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selling Price (₦)</label>
+                    <input type="number" id="editTotalCostOfTies" name="total_cost_of_ties" step="0.01" min="0" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+            </div>
+            
+            <!-- Delivery Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Who Pays Delivery</label>
+                    <select id="editDeliveryPaymentType" name="delivery_payment_type" onchange="toggleEditDeliveryAmounts()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                        <option value="customer">Customer Paid</option>
+                        <option value="business">Business Paid</option>
+                        <option value="shared">Shared Payment</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Packaging Boxes</label>
+                    <input type="number" id="editPackagingBoxes" name="packaging_boxes" min="0" value="0" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="editDeliveryAmounts" style="display: none;">
+                <div id="editCustomerAmountField" style="display: none;">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Customer Delivery Amount (₦)</label>
+                    <input type="number" id="editCustomerDeliveryAmount" name="customer_delivery_amount" step="0.01" min="0" value="0" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+                <div id="editBusinessAmountField" style="display: none;">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Business Delivery Amount (₦)</label>
+                    <input type="number" id="editBusinessDeliveryAmount" name="business_delivery_amount" step="0.01" min="0" value="0" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" onclick="toggleEditModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                    Cancel
+                </button>
+                <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 font-medium">
+                    Update Order
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleModal() {
+    const modal = document.getElementById('orderModal');
+    modal.classList.toggle('hidden');
+}
+
+// Close modal when clicking outside
+document.getElementById('orderModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        toggleModal();
+    }
+});
+
+// Set today's date as default in DD/MM/YYYY format
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    document.querySelector('input[name="order_date"]').value = `${day}/${month}/${year}`;
+});
+
+// Toggle delivery amount fields based on payment type
+function toggleDeliveryAmounts() {
+    const paymentType = document.getElementById('deliveryPaymentType').value;
+    const deliveryAmounts = document.getElementById('deliveryAmounts');
+    const customerField = document.getElementById('customerAmountField');
+    const businessField = document.getElementById('businessAmountField');
+    
+    if (paymentType === 'shared') {
+        deliveryAmounts.style.display = 'block';
+        customerField.style.display = 'block';
+        businessField.style.display = 'block';
+    } else if (paymentType === 'customer') {
+        deliveryAmounts.style.display = 'block';
+        customerField.style.display = 'block';
+        businessField.style.display = 'none';
+    } else if (paymentType === 'business') {
+        deliveryAmounts.style.display = 'block';
+        customerField.style.display = 'none';
+        businessField.style.display = 'block';
+    } else {
+        deliveryAmounts.style.display = 'none';
+    }
+}
+
+// Edit order function
+function editOrder(orderId) {
+    fetch(`/orders/edit/${orderId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateEditModal(data.order);
+                document.getElementById('editOrderModal').classList.remove('hidden');
+            } else {
+                alert('Error loading order data');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading order data');
+        });
+}
+
+function populateEditModal(order) {
+    document.getElementById('editOrderId').value = order.id;
+    document.getElementById('editName').value = `${order.customer.first_name} ${order.customer.last_name}`;
+    document.getElementById('editPhone').value = order.customer.phone;
+    document.getElementById('editAddress').value = order.customer.address;
+    const orderDate = new Date(order.created_at);
+    const day = String(orderDate.getDate()).padStart(2, '0');
+    const month = String(orderDate.getMonth() + 1).padStart(2, '0');
+    const year = orderDate.getFullYear();
+    document.getElementById('editOrderDate').value = `${day}/${month}/${year}`;
+    document.getElementById('editNumberOfTies').value = order.number_of_ties;
+    document.getElementById('editCostPricePerTie').value = order.cost_price_per_tie;
+    document.getElementById('editTotalCostOfTies').value = order.total_amount;
+    document.getElementById('editDeliveryPaymentType').value = order.delivery_payment_type;
+    document.getElementById('editCustomerDeliveryAmount').value = order.customer_delivery_amount;
+    document.getElementById('editBusinessDeliveryAmount').value = order.business_delivery_amount;
+    document.getElementById('editPackagingBoxes').value = order.packaging_boxes;
+    
+    toggleEditDeliveryAmounts();
+}
+
+function toggleEditModal() {
+    document.getElementById('editOrderModal').classList.toggle('hidden');
+}
+
+function toggleEditDeliveryAmounts() {
+    const paymentType = document.getElementById('editDeliveryPaymentType').value;
+    const deliveryAmounts = document.getElementById('editDeliveryAmounts');
+    const customerField = document.getElementById('editCustomerAmountField');
+    const businessField = document.getElementById('editBusinessAmountField');
+    
+    if (paymentType === 'shared') {
+        deliveryAmounts.style.display = 'block';
+        customerField.style.display = 'block';
+        businessField.style.display = 'block';
+    } else if (paymentType === 'customer') {
+        deliveryAmounts.style.display = 'block';
+        customerField.style.display = 'block';
+        businessField.style.display = 'none';
+    } else if (paymentType === 'business') {
+        deliveryAmounts.style.display = 'block';
+        customerField.style.display = 'none';
+        businessField.style.display = 'block';
+    } else {
+        deliveryAmounts.style.display = 'none';
+    }
+}
+
+// Delete order function
+function deleteOrder(orderId, orderNumber) {
+    if (confirm('Are you sure you want to delete order ' + orderNumber + '?')) {
+        // Create a form to submit DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/orders/delete/' + orderId + '/';
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ customer.first_name }} {{ customer.last_name }} Orders{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="flex flex-col gap-2">
+    <div class="flex flex-wrap gap-2">
+        <a class="text-gray-500 text-sm font-medium leading-normal" href="{% url 'customers' %}">Customers</a>
+        <span class="text-gray-500 text-sm font-medium leading-normal">/</span>
+        <span class="text-[#111418] dark:text-white text-sm font-medium leading-normal">{{ customer.first_name }} {{ customer.last_name }}</span>
+    </div>
+    <p class="text-[#111418] dark:text-white text-3xl font-bold leading-tight">Customer Orders</p>
+    <p class="text-gray-500 text-base">{{ customer.first_name }} {{ customer.last_name }} - {{ customer.phone }}</p>
+</div>
+
+<!-- Customer Summary -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-gray-900 shadow-soft">
+        <p class="text-gray-600 dark:text-gray-300 text-base font-medium leading-normal">Total Orders</p>
+        <p class="text-[#111418] dark:text-white tracking-light text-4xl font-bold leading-tight">{{ orders.count }}</p>
+    </div>
+    <div class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-gray-900 shadow-soft">
+        <p class="text-gray-600 dark:text-gray-300 text-base font-medium leading-normal">Total Ties</p>
+        <p class="text-[#111418] dark:text-white tracking-light text-4xl font-bold leading-tight">{{ customer.total_ties_bought }}</p>
+    </div>
+    <div class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-gray-900 shadow-soft">
+        <p class="text-gray-600 dark:text-gray-300 text-base font-medium leading-normal">Total Spent</p>
+        <p class="text-[#111418] dark:text-white tracking-light text-4xl font-bold leading-tight">₦{{ customer.total_amount_paid }}</p>
+    </div>
+</div>
+
+<!-- Orders List -->
+<div class="flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+    <div class="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Order #</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Date</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Status</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider text-right">Amount</div>
+        <div class="text-gray-500 text-xs font-semibold uppercase tracking-wider text-right">Profit</div>
+    </div>
+    
+    <div class="divide-y divide-gray-200 dark:divide-gray-800">
+        {% for order in orders %}
+            <div class="grid grid-cols-5 items-center gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors duration-150">
+                <div class="text-[#111418] dark:text-white text-sm font-bold">{{ order.order_number }}</div>
+                <div class="text-gray-600 dark:text-gray-300 text-sm">{{ order.created_at|date:"M d, Y" }}</div>
+                <div>
+                    {% if order.status == 'delivered' %}
+                        <span class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/50 px-3 py-1 text-xs font-medium text-green-700 dark:text-green-300">Delivered</span>
+                    {% elif order.status == 'shipped' %}
+                        <span class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/50 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">Shipped</span>
+                    {% elif order.status == 'processing' %}
+                        <span class="inline-flex items-center rounded-full bg-orange-100 dark:bg-orange-900/50 px-3 py-1 text-xs font-medium text-orange-700 dark:text-orange-300">Processing</span>
+                    {% else %}
+                        <span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">{{ order.get_status_display }}</span>
+                    {% endif %}
+                </div>
+                <div class="text-gray-600 dark:text-gray-300 text-sm text-right font-monospace">₦{{ order.total_amount }}</div>
+                <div class="text-gray-600 dark:text-gray-300 text-sm text-right font-monospace">₦{{ order.gross_profit|floatformat:2 }}</div>
+            </div>
+        {% empty %}
+            <div class="px-6 py-8 text-center">
+                <p class="text-gray-500 text-sm">No orders found for this customer.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

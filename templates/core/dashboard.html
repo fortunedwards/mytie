@@ -1,0 +1,116 @@
+{% extends 'core/base.html' %}
+{% load currency_filters %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="flex flex-col gap-2">
+    <div class="flex flex-wrap gap-2">
+        <a class="text-gray-500 text-sm font-medium leading-normal" href="#">Home</a>
+        <span class="text-gray-500 text-sm font-medium leading-normal">/</span>
+        <span class="text-[#111418] dark:text-white text-sm font-medium leading-normal">Dashboard</span>
+    </div>
+    <p class="text-[#111418] dark:text-white text-3xl font-bold leading-tight">Good Morning, Admin</p>
+    <p class="text-gray-500 text-base">{% now "l, F j" %}</p>
+</div>
+
+<!-- Stats Cards -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-gray-900 shadow-soft">
+        <div class="flex items-center justify-between">
+            <p class="text-base font-medium">Total Customers</p>
+            <div class="p-3 rounded-full bg-[#E6F4EA] dark:bg-green-900/50">
+                <span class="material-symbols-outlined text-green-700 dark:text-green-300">group</span>
+            </div>
+        </div>
+        <p class="text-3xl font-bold tracking-tight">{{ total_customers }}</p>
+        <p class="text-sm font-medium text-green-600 dark:text-green-400">Active customers</p>
+    </div>
+    
+    <div class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-gray-900 shadow-soft">
+        <div class="flex items-center justify-between">
+            <p class="text-base font-medium">Active Orders</p>
+            <div class="p-3 rounded-full bg-[#FFF8E1] dark:bg-yellow-900/50">
+                <span class="material-symbols-outlined text-yellow-700 dark:text-yellow-300">pending_actions</span>
+            </div>
+        </div>
+        <p class="text-3xl font-bold tracking-tight">{{ total_orders }}</p>
+        <p class="text-sm font-medium text-green-600 dark:text-green-400">Total orders</p>
+    </div>
+    
+    <div class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-gray-900 shadow-soft">
+        <div class="flex items-center justify-between">
+            <p class="text-base font-medium">Monthly Revenue</p>
+            <div class="p-3 rounded-full bg-[#F3E8FD] dark:bg-purple-900/50">
+                <span class="material-symbols-outlined text-purple-700 dark:text-purple-300">monitoring</span>
+            </div>
+        </div>
+        <p class="text-3xl font-bold tracking-tight">₦{{ current_month_revenue|currency }}</p>
+        <p class="text-sm font-medium text-green-600 dark:text-green-400">{{ current_month }}</p>
+    </div>
+    
+    <div class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-gray-900 shadow-soft">
+        <div class="flex items-center justify-between">
+            <p class="text-base font-medium">Total Ties Sold</p>
+            <div class="p-3 rounded-full bg-primary/10 dark:bg-primary/20">
+                <span class="material-symbols-outlined text-primary">inventory</span>
+            </div>
+        </div>
+        <p class="text-3xl font-bold tracking-tight">{{ total_ties_sold }}</p>
+        <p class="text-sm font-medium text-green-600 dark:text-green-400">All time</p>
+    </div>
+</section>
+
+<!-- Top Customers -->
+<section>
+    <div class="flex flex-col gap-4 rounded-xl border border-gray-200 dark:border-gray-800 p-6 bg-white dark:bg-gray-900 shadow-soft">
+        <h3 class="text-[22px] font-bold tracking-tight">Top Customers</h3>
+        <div class="flex flex-col gap-4">
+            {% for customer in top_customers %}
+                <div class="flex items-center gap-4">
+                    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400">
+                        <span class="material-symbols-outlined text-sm">person</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-medium">{{ customer.first_name }} {{ customer.last_name }}</p>
+                        <p class="text-sm text-gray-500">LTV</p>
+                    </div>
+                    <p class="font-bold text-lg">₦{{ customer.customer_lifetime_value|currency }}</p>
+                </div>
+            {% empty %}
+                <p class="text-gray-500 text-sm">No customers yet</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Recent Orders -->
+<section>
+    <h3 class="text-[22px] font-bold tracking-tight mb-4">Recent Orders</h3>
+    <div class="flex flex-col gap-3">
+        {% for order in recent_orders %}
+            <div class="grid grid-cols-4 items-center gap-4 p-4 rounded-xl bg-white dark:bg-gray-900 shadow-soft">
+                <p class="font-medium">{{ order.order_number }}</p>
+                <p class="text-gray-500">{{ order.customer }}</p>
+                <p class="font-semibold">₦{{ order.total_amount|currency }}</p>
+                <div class="flex justify-start">
+                    {% if order.status == 'new' %}
+                        <span class="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">New</span>
+                    {% elif order.status == 'shipped' %}
+                        <span class="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300">Shipped</span>
+                    {% elif order.status == 'delivered' %}
+                        <span class="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-sage-green/20 text-sage-green">Delivered</span>
+                    {% else %}
+                        <span class="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300">{{ order.get_status_display }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <div class="p-4 rounded-xl bg-white dark:bg-gray-900 shadow-soft text-center">
+                <p class="text-gray-500">No recent orders</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

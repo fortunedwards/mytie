@@ -1,0 +1,116 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Customers{% endblock %}
+
+{% block content %}
+<!-- Header with Search and Actions -->
+<header class="sticky top-0 z-10 w-full bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 mb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center gap-8">
+                <h1 class="text-xl font-bold text-[#111418] dark:text-white">Customer Directory</h1>
+            </div>
+            <div class="flex flex-1 items-center justify-center px-2 lg:ml-6 lg:justify-end">
+                <div class="w-full max-w-lg lg:max-w-xs">
+                    <form method="get">
+                        <label class="sr-only" for="search">Search</label>
+                        <div class="relative text-gray-400 focus-within:text-gray-600">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <span class="material-symbols-outlined text-gray-500">search</span>
+                            </div>
+                            <input class="block w-full rounded-lg border-0 bg-white dark:bg-gray-700 py-2 pl-10 pr-3 text-[#111418] dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6" id="search" name="search" placeholder="Search customers..." type="search" value="{{ search_query }}"/>
+                            <input type="hidden" name="sort" value="{{ sort_by }}">
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="hidden lg:ml-4 lg:flex lg:items-center">
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <select class="flex items-center gap-x-1.5 rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-semibold text-[#111418] dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600" onchange="window.location.href='?sort=' + this.value + '&search={{ search_query }}'">
+                            <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sort by Name</option>
+                            <option value="first_order" {% if sort_by == 'first_order' %}selected{% endif %}>Sort by First Order</option>
+                            <option value="ties" {% if sort_by == 'ties' %}selected{% endif %}>Sort by Total Ties</option>
+                        </select>
+                    </div>
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em]">
+                        <span class="truncate">Add New Customer</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Customer Cards Grid -->
+<main class="flex-1">
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {% for customer in customers %}
+                <!-- Customer Card -->
+                <div class="group relative flex flex-col overflow-hidden rounded-xl bg-white dark:bg-gray-800 shadow-md transition-all hover:shadow-lg">
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400">
+                                    <span class="material-symbols-outlined">person</span>
+                                </div>
+                                <div>
+                                    <p class="text-base font-bold text-[#111418] dark:text-white">{{ customer.first_name }} {{ customer.last_name }}</p>
+                                    <p class="text-sm text-gray-500">{{ customer.phone }}</p>
+                                </div>
+                            </div>
+                            <div class="flex h-6 items-center justify-center rounded-full {% if customer.total_ties_bought > 10 %}bg-orange-100 dark:bg-orange-900/50{% else %}bg-green-100 dark:bg-green-900/50{% endif %} px-2.5">
+                                <p class="text-xs font-semibold {% if customer.total_ties_bought > 10 %}text-orange-600 dark:text-orange-400{% else %}text-green-600 dark:text-green-400{% endif %}">{{ customer.total_ties_bought }} Ties</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <p class="text-sm text-gray-500">Last Order: {% if customer.first_order_date %}{{ customer.first_order_date|date:"d M Y" }}{% else %}No orders{% endif %}</p>
+                        </div>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 transition-opacity group-hover:opacity-100">
+                        <a href="{% url 'customer_orders' customer.id %}" class="rounded-lg bg-white px-4 py-2 text-sm font-bold text-gray-800 shadow-lg">View History</a>
+                    </div>
+                </div>
+            {% empty %}
+                <!-- Empty State -->
+                <div class="col-span-full mt-16 flex flex-col items-center justify-center text-center">
+                    <div class="flex flex-col items-center gap-6">
+                        <div class="text-primary dark:text-primary/80">
+                            <svg fill="none" height="96" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" viewbox="0 0 24 24" width="96" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                        </div>
+                        <div class="flex max-w-md flex-col items-center gap-2">
+                            <p class="text-xl font-bold text-[#111418] dark:text-white">No Customers Found</p>
+                            <p class="text-base text-gray-500">Try adjusting your search or sort criteria to find what you're looking for.</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+            <div class="mt-8 flex items-center justify-center">
+                <nav aria-label="Pagination" class="flex items-center gap-2">
+                    {% if page_obj.has_previous %}
+                        <a class="flex size-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" href="?page={{ page_obj.previous_page_number }}&sort={{ sort_by }}&search={{ search_query }}">
+                            <span class="material-symbols-outlined text-xl">chevron_left</span>
+                        </a>
+                    {% endif %}
+                    
+                    <a class="text-sm font-bold leading-normal flex size-9 items-center justify-center text-white bg-primary rounded-lg" href="#">{{ page_obj.number }}</a>
+                    
+                    {% if page_obj.has_next %}
+                        <a class="flex size-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" href="?page={{ page_obj.next_page_number }}&sort={{ sort_by }}&search={{ search_query }}">
+                            <span class="material-symbols-outlined text-xl">chevron_right</span>
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,288 @@
+{% extends 'core/base.html' %}
+{% load currency_filters %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<!-- Page Header with Add Expense Button -->
+<div class="flex flex-wrap justify-between items-center gap-4 mb-8">
+    <div class="flex flex-col gap-1">
+        <h1 class="text-[#111418] dark:text-white text-3xl font-bold leading-tight">Financial Report</h1>
+        <p class="text-gray-500 text-base font-normal leading-normal">Track revenue, expenses, and profitability.</p>
+    </div>
+    <button onclick="toggleExpenseModal()" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] shadow-sm hover:bg-primary/90">
+        <span class="truncate">+ Add Expense</span>
+    </button>
+</div>
+
+<!-- Financial Health Summary -->
+<div>
+    <h2 class="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Financial Health</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+        <div class="flex flex-1 flex-col gap-2 rounded-lg p-6 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-soft">
+            <p class="text-gray-600 dark:text-gray-300 text-base font-medium leading-normal">Total Revenue (Sales)</p>
+            <p class="text-[#111418] dark:text-white tracking-light text-4xl font-bold leading-tight">₦{{ total_revenue|currency }}</p>
+            <p class="text-sage-green text-base font-medium leading-normal">{{ order_count }} orders</p>
+        </div>
+        <div class="flex flex-1 flex-col gap-2 rounded-lg p-6 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-soft">
+            <p class="text-gray-600 dark:text-gray-300 text-base font-medium leading-normal">Total Expenses</p>
+            <p class="text-red-600 dark:text-red-500 tracking-light text-4xl font-bold leading-tight">₦{{ total_expenses|currency }}</p>
+            <p class="text-red-500 text-base font-medium leading-normal">Operating expenses</p>
+        </div>
+        <div class="flex flex-1 flex-col gap-2 rounded-lg p-6 border border-gray-200 dark:border-gray-800 bg-sage-green/10 dark:bg-sage-green/20 shadow-soft">
+            <p class="text-gray-600 dark:text-gray-300 text-base font-medium leading-normal">Net Profit</p>
+            <p class="text-sage-green tracking-light text-5xl font-bold leading-tight">₦{{ net_profit|currency }}</p>
+            <p class="text-gray-500 text-base font-medium leading-normal">{{ net_margin }}% margin</p>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Breakdown -->
+<div class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-soft">
+    <h2 class="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] pb-5">Revenue Breakdown</h2>
+    <div class="flex h-4 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+        <div class="h-full bg-gray-400 dark:bg-gray-500" style="width: {% if total_revenue > 0 %}{{ expenses_percentage|floatformat:0 }}%{% else %}0%{% endif %}"></div>
+        <div class="h-full bg-sage-green" style="width: {% if total_revenue > 0 %}{{ net_margin|floatformat:0 }}%{% else %}0%{% endif %}"></div>
+    </div>
+    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div class="flex items-center gap-2">
+            <div class="size-3 rounded-full bg-gray-400 dark:bg-gray-500"></div>
+            <div>
+                <span class="font-medium text-gray-700 dark:text-gray-300">Operating Expenses:</span>
+                <span class="text-[#111418] dark:text-white font-bold">{% if total_revenue > 0 %}{{ expenses_percentage|floatformat:1 }}%{% else %}0%{% endif %}</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="size-3 rounded-full bg-sage-green"></div>
+            <div>
+                <span class="font-medium text-gray-700 dark:text-gray-300">Net Profit Margin:</span>
+                <span class="text-[#111418] dark:text-white font-bold">{{ net_margin|floatformat:1 }}%</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions Table -->
+<div>
+    <h2 class="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Recent Transactions</h2>
+    <div class="overflow-x-auto bg-white dark:bg-gray-900 rounded-lg shadow-soft">
+        <table class="w-full text-left">
+            <thead class="border-b border-gray-200 dark:border-gray-800">
+                <tr>
+                    <th class="p-4 text-sm font-semibold text-gray-500">Date</th>
+                    <th class="p-4 text-sm font-semibold text-gray-500">Description</th>
+                    <th class="p-4 text-sm font-semibold text-gray-500">Type</th>
+                    <th class="p-4 text-sm font-semibold text-gray-500 text-right">Amount</th>
+                    <th class="p-4 text-sm font-semibold text-gray-500 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in recent_expenses %}
+                    <tr class="border-b border-gray-200 dark:border-gray-800">
+                        <td class="p-4 whitespace-nowrap text-gray-600 dark:text-gray-300">{{ expense.date|date:"M d, Y" }}</td>
+                        <td class="p-4 font-medium text-[#111418] dark:text-white">{{ expense.description }}</td>
+                        <td class="p-4">
+                            <span class="text-gray-600 dark:text-gray-300">{{ expense.expense_type }}</span>
+                        </td>
+                        <td class="p-4 text-right font-medium text-red-600 dark:text-red-500">-₦{{ expense.amount|currency }}</td>
+                        <td class="p-4 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="editExpense({{ expense.id }})" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                    <span class="material-symbols-outlined text-sm">edit</span>
+                                </button>
+                                <button onclick="deleteExpense({{ expense.id }}, '{{ expense.description }}')" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                                    <span class="material-symbols-outlined text-sm">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="p-4 text-center text-gray-500">No expenses recorded.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Expense Modal -->
+<div id="expenseModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-[#111418] dark:text-white">Add New Expense</h2>
+            <button onclick="toggleExpenseModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount (₦)</label>
+                    <input type="number" name="amount" step="0.01" min="0" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
+                    <input type="date" name="date" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Expense Type</label>
+                <select id="expenseTypeSelect" name="expense_type" onchange="toggleCustomExpenseType()" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+                    <option value="">Select expense type</option>
+                    {% for expense_type in existing_expense_types %}
+                        <option value="{{ expense_type }}">{{ expense_type }}</option>
+                    {% endfor %}
+                    <option value="__new__">+ Add New Type</option>
+                </select>
+                <input type="text" id="customExpenseType" name="custom_expense_type" placeholder="Enter new expense type" style="display: none;" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white mt-2">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                <input type="text" name="description" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white">
+            </div>
+            
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" onclick="toggleExpenseModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                    Cancel
+                </button>
+                <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 font-medium">
+                    Add Expense
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleExpenseModal() {
+    const modal = document.getElementById('expenseModal');
+    modal.classList.toggle('hidden');
+    
+    // Set today's date when opening modal
+    if (!modal.classList.contains('hidden')) {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        const dateField = modal.querySelector('input[name="date"]');
+        if (dateField && !dateField.value) {
+            dateField.value = `${day}/${month}/${year}`;
+        }
+    }
+}
+
+// Close modal when clicking outside
+document.getElementById('expenseModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        toggleExpenseModal();
+    }
+});
+
+// Edit expense function
+function editExpense(expenseId) {
+    fetch(`/expenses/edit/${expenseId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateExpenseModal(data.expense);
+                document.getElementById('expenseModal').classList.remove('hidden');
+            } else {
+                alert('Error loading expense data');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading expense data');
+        });
+}
+
+function populateExpenseModal(expense) {
+    const form = document.querySelector('#expenseModal form');
+    form.action = `/expenses/update/`;
+    
+    // Add hidden expense ID field
+    let expenseIdInput = form.querySelector('input[name="expense_id"]');
+    if (!expenseIdInput) {
+        expenseIdInput = document.createElement('input');
+        expenseIdInput.type = 'hidden';
+        expenseIdInput.name = 'expense_id';
+        form.appendChild(expenseIdInput);
+    }
+    expenseIdInput.value = expense.id;
+    
+    // Populate form fields
+    form.querySelector('input[name="amount"]').value = expense.amount;
+    form.querySelector('input[name="date"]').value = expense.date;
+    form.querySelector('input[name="description"]').value = expense.description;
+    
+    // Handle expense type dropdown
+    const expenseTypeSelect = form.querySelector('#expenseTypeSelect');
+    const customInput = form.querySelector('#customExpenseType');
+    
+    // Check if expense type exists in dropdown
+    let optionExists = false;
+    for (let option of expenseTypeSelect.options) {
+        if (option.value === expense.expense_type) {
+            optionExists = true;
+            break;
+        }
+    }
+    
+    if (optionExists) {
+        expenseTypeSelect.value = expense.expense_type;
+        customInput.style.display = 'none';
+    } else {
+        expenseTypeSelect.value = '__new__';
+        customInput.style.display = 'block';
+        customInput.value = expense.expense_type;
+    }
+    
+    // Change modal title and button text
+    document.querySelector('#expenseModal h2').textContent = 'Edit Expense';
+    document.querySelector('#expenseModal button[type="submit"]').textContent = 'Update Expense';
+}
+
+// Delete expense function
+function deleteExpense(expenseId, description) {
+    if (confirm(`Are you sure you want to delete expense "${description}"?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/expenses/delete/${expenseId}/`;
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Toggle custom expense type input
+function toggleCustomExpenseType() {
+    const select = document.getElementById('expenseTypeSelect');
+    const customInput = document.getElementById('customExpenseType');
+    
+    if (select.value === '__new__') {
+        customInput.style.display = 'block';
+        customInput.required = true;
+        select.required = false;
+    } else {
+        customInput.style.display = 'none';
+        customInput.required = false;
+        select.required = true;
+        customInput.value = '';
+    }
+}
+</script>
+
+{% endblock %}

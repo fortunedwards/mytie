@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Login - My Tie</title>
+    <link rel="icon" type="image/jpeg" href="/static/images/icon.jpg" style="border-radius: 50%;">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1A73E8",
+                        "background-light": "#FFFFFF",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+    </style>
+</head>
+<body class="font-display">
+<div class="relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root" style='font-family: "Inter", "Noto Sans", sans-serif;'>
+    <div class="flex h-full min-h-screen grow flex-col">
+        <div class="flex flex-1">
+            <div class="flex w-full flex-wrap">
+                <!-- Left Panel - Brand Section -->
+                <div class="relative hidden w-1/2 flex-col items-center justify-center bg-gray-100 lg:flex">
+                    <div class="absolute inset-0 h-full w-full bg-cover bg-center bg-no-repeat" style='background-image: url("/static/images/mmmyyytie.jpg");'></div>
+                    <div class="absolute inset-0 bg-black/60"></div>
+
+                </div>
+                
+                <!-- Right Panel - Login Form -->
+                <div class="flex w-full flex-1 flex-col items-center justify-center p-6 lg:w-1/2">
+                    <div class="flex w-full max-w-sm flex-col items-start gap-8">
+                        <div class="flex w-full flex-col gap-2">
+                            <p class="text-3xl font-black leading-tight tracking-[-0.033em] text-[#333333] dark:text-white">Welcome Back</p>
+                            <p class="text-base text-gray-500 dark:text-gray-400">Log in to continue to your account.</p>
+                        </div>
+                        
+                        {% if form.errors %}
+                            <div class="flex w-full flex-col items-stretch gap-3 rounded-xl border border-[#E57373] bg-[#E57373]/10 p-4">
+                                <p class="text-sm font-semibold text-[#E57373]">Login Error</p>
+                                <p class="text-sm text-red-700 dark:text-red-300">Invalid username or password. Please try again.</p>
+                            </div>
+                        {% endif %}
+                        
+                        <form method="post" class="flex w-full flex-col items-stretch gap-4">
+                            {% csrf_token %}
+                            
+                            <label class="flex flex-col">
+                                <p class="pb-2 text-base font-medium leading-normal text-[#333333] dark:text-gray-200">Username</p>
+                                <input class="form-input h-12 w-full flex-1 resize-none overflow-hidden rounded-lg border border-[#CCCCCC] bg-white p-3 text-base font-normal leading-normal text-[#333333] placeholder:text-gray-400 focus:border-primary focus:outline-0 focus:ring-0" placeholder="Enter your username" name="{{ form.username.name }}" type="text" value="{{ form.username.value|default:'' }}"/>
+                            </label>
+                            
+                            <label class="flex flex-col">
+                                <p class="pb-2 text-base font-medium leading-normal text-[#333333] dark:text-gray-200">Password</p>
+                                <div class="flex w-full flex-1 items-stretch">
+                                    <input class="form-input h-12 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-l-lg border border-r-0 border-[#CCCCCC] bg-white p-3 pr-2 text-base font-normal leading-normal text-[#333333] placeholder:text-gray-400 focus:border-primary focus:outline-0 focus:ring-0" placeholder="Enter your password" type="password" name="{{ form.password.name }}"/>
+                                    <div class="flex cursor-pointer items-center justify-center rounded-r-lg border border-l-0 border-[#CCCCCC] bg-white px-3 text-gray-500 hover:text-gray-700" onclick="togglePassword()">
+                                        <svg id="password-toggle" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <button type="submit" class="flex h-12 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-5 text-base font-bold leading-normal tracking-[0.015em] text-white shadow-sm transition-shadow hover:shadow-md">
+                                <span class="truncate">Log In</span>
+                            </button>
+                        </form>
+                        
+                        <div class="flex w-full flex-col items-center gap-4">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Secure access to your tie business management system</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword() {
+    const passwordInput = document.querySelector('input[name="password"]');
+    const toggleIcon = document.getElementById('password-toggle');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.innerHTML = '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.innerHTML = '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>';
+    }
+}
+</script>
+</body>
+</html>
