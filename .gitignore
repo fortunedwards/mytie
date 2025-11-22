@@ -1,39 +1,35 @@
 # Django
 *.log
 *.pot
-*.pyc
-__pycache__/
 local_settings.py
-db.sqlite3
-db.sqlite3-journal
 
-# Media files
-media/
+# Database
+*.sqlite3
+db.sqlite3
+db_backup.sqlite3
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 
 # Static files (if collected)
 staticfiles/
 
-# Environment variables
-.env
+# Virtual environments
 .venv
 env/
 venv/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Environment variables
+.env
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Python
-*.py[cod]
-*$py.class
-*.so
-.Python
+# Python build artifacts
 build/
 develop-eggs/
 dist/
@@ -49,6 +45,12 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # Migrations (optional - uncomment if you don't want to track migrations)
 # */migrations/*.py
